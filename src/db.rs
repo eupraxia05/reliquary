@@ -497,6 +497,7 @@ impl Plugin for DbPlugin {
 
 impl DbConnection {
     // opens a db connection at the default db path
+    #[deprecated(note = "training_assistant specific, should be moved there")]
     pub(crate) fn open_default(context: &Context) -> Result<Self> {
         assert!(!cfg!(test));
         let db_path = Self::get_default_db_path()?;
@@ -508,6 +509,7 @@ impl DbConnection {
     }
 
     // opens a db connection at a test db path
+    #[deprecated(note = "training_assistant specific, should be moved there")]
     pub(crate) fn open_test(context: &Context) -> Result<Self> {
         let table_configs = match context.get_resource::<DbTableConfigs>() {
             Some(t) => t.configs.clone(),
@@ -526,7 +528,7 @@ impl DbConnection {
         Ok(dirs.data_dir().join("data/data.db"))
     }
 
-    fn open_in_memory(table_configs: Vec<TableConfig>) -> Result<Self> {
+    pub fn open_in_memory(table_configs: Vec<TableConfig>) -> Result<Self> {
         // create the database in memory
         let mut connection = Connection::open_in_memory()?;
 
@@ -542,7 +544,7 @@ impl DbConnection {
     }
 
     // opens a db connection from the specified path
-    fn open_from_path(path: &PathBuf, table_configs: Vec<TableConfig>) -> Result<Self> {
+    pub fn open_from_path(path: &PathBuf, table_configs: Vec<TableConfig>) -> Result<Self> {
         // create the directories leading to
         // the db path
         fs::create_dir_all(path.parent().unwrap())?;

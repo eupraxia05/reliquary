@@ -43,28 +43,34 @@ impl Display for Error {
 impl std::error::Error for Error {}
 
 pub trait DbAppExt {
-    fn db_connection(&mut self) -> Mut<db::DbConnection>;
+    fn db_connection(&mut self) -> Mut<'_, db::DbConnection>;
 
-    fn add_table(&mut self, table: db::TableConfig) -> &mut App;
+    fn add_table(&mut self, table: db::TableConfig) -> Entity;
 }
 
 impl DbAppExt for App {
-    fn db_connection(&mut self) -> Mut<db::DbConnection> {
-        self.world_mut().non_send_resource_mut::<db::DbConnection>()
+    fn db_connection(&mut self) -> Mut<'_, db::DbConnection> {
+        self.world_mut().db_connection()
     }
 
-    fn add_table(&mut self, table: db::TableConfig) -> &mut App {
-        self
+    fn add_table(&mut self, config: db::TableConfig) -> Entity {
+        self.world_mut().add_table(config)
     }
 }
 
 pub trait DbWorldExt {
-    fn db_connection(&mut self) -> Mut<db::DbConnection>;
+    fn db_connection(&mut self) -> Mut<'_, db::DbConnection>;
+
+    fn add_table(&mut self, config: db::TableConfig) -> Entity;
 }
 
 impl DbWorldExt for World {
-    fn db_connection(&mut self) -> Mut<db::DbConnection> {
+    fn db_connection(&mut self) -> Mut<'_, db::DbConnection> {
         self.non_send_resource_mut::<db::DbConnection>()
+    }
+
+    fn add_table(&mut self, config: db::TableConfig) -> Entity {
+        self.spawn(Table { config }).id()
     }
 }
 
@@ -101,13 +107,10 @@ fn startup(world: &mut World) -> Result<(), BevyError> {
 }
 
 fn handle_system_result(In(result): In<Result<()>>) {
-    match result {
-        Err(e) => {
-            error!("Reliquary error: {}", e.to_string());
-            #[cfg(test)]
-            panic!("System error raised, stopping test...");
-        }
-        _ => {}
+    if let Err(e) = result {
+        error!("Reliquary error: {}", e.to_string());
+        #[cfg(test)]
+        panic!("System error raised, stopping test...");
     }
 }
 
@@ -118,14 +121,12 @@ struct Table {
 
 #[cfg(test)]
 mod test {
-    use crate::bevy::DbAppExt;
     use crate::bevy::DbWorldExt;
     use crate::bevy::ReliquaryPlugin;
     use crate::bevy::Table;
     use crate::prelude::*;
 
     extern crate self as reliquary;
-    use bevy::ecs::schedule::LogLevel;
     use bevy::log::Level;
     use bevy::prelude::*;
 

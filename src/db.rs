@@ -1,5 +1,5 @@
 use crate::{Error, Result};
-use rusqlite::{Connection, ToSql, params, types::FromSql};
+use rusqlite::{params, types::FromSql, Connection, ToSql};
 use std::fmt::{Display, Formatter};
 use std::fs;
 use std::path::PathBuf;
@@ -584,7 +584,12 @@ impl TableField for Vec<RowId> {
         let s = db_connection.get_field_in_table_row::<String>(table_name, row_id, field_name)?;
         let mut vec = Vec::new();
         for v in s.split(',') {
-            let i: i64 = v.parse().unwrap();
+            let i: i64 = match v.parse() {
+                Ok(n) => n,
+                Err(e) => {
+                    return Err(Error::new(format!("couldn't parse \"{}\"", s)));
+                }
+            };
             vec.push(RowId(i));
         }
         Ok(vec)
@@ -631,7 +636,11 @@ where
         field_name: String,
     ) -> Result<Self> {
         let s = db_connection.get_field_in_table_row::<T>(table_name, row_id, field_name);
-        if let Ok(v) = s { Ok(Some(v)) } else { Ok(None) }
+        if let Ok(v) = s {
+            Ok(Some(v))
+        } else {
+            Ok(None)
+        }
     }
     fn to_display_string(&self, _: TableFieldDisplayStringArgs) -> String {
         format!("{:?}", self)

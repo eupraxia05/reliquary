@@ -61,5 +61,7 @@ impl From<std::io::Error> for Error {
 /// crate.
 pub mod prelude {
     pub use crate::db::{DbConnection, FieldTypeInfo, RowId, TableConfig, TableField, TableRow};
+    #[cfg(feature = "dolmen")]
+    pub use crate::dolmen::{ReliquaryContextExt, ReliquaryPlugin};
     pub use macros::TableRow;
 }

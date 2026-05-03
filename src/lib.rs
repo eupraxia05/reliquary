@@ -62,6 +62,6 @@ impl From<std::io::Error> for Error {
 pub mod prelude {
     pub use crate::db::{DbConnection, FieldTypeInfo, RowId, TableConfig, TableField, TableRow};
     #[cfg(feature = "dolmen")]
-    pub use crate::dolmen::{DbContextExt, DbPlugin};
+    pub use crate::dolmen::{DbConfig, DbContextExt, DbPlugin};
     pub use macros::TableRow;
 }

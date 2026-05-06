@@ -1,5 +1,5 @@
 use crate::{Error, Result};
-use rusqlite::{params, types::FromSql, Connection, ToSql};
+use rusqlite::{Connection, ToSql, params, types::FromSql};
 use std::fmt::{Display, Formatter};
 use std::fs;
 use std::path::PathBuf;
@@ -582,6 +582,11 @@ impl TableField for Vec<RowId> {
         field_name: String,
     ) -> Result<Self> {
         let s = db_connection.get_field_in_table_row::<String>(table_name, row_id, field_name)?;
+
+        if s.is_empty() {
+            return Ok(Vec::new());
+        }
+
         let mut vec = Vec::new();
         for v in s.split(',') {
             let i: i64 = match v.parse() {
@@ -636,11 +641,7 @@ where
         field_name: String,
     ) -> Result<Self> {
         let s = db_connection.get_field_in_table_row::<T>(table_name, row_id, field_name);
-        if let Ok(v) = s {
-            Ok(Some(v))
-        } else {
-            Ok(None)
-        }
+        if let Ok(v) = s { Ok(Some(v)) } else { Ok(None) }
     }
     fn to_display_string(&self, _: TableFieldDisplayStringArgs) -> String {
         format!("{:?}", self)
@@ -654,5 +655,37 @@ impl FromSql for RowId {
         } else {
             Err(rusqlite::types::FromSqlError::InvalidType)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::prelude::*;
+    extern crate self as reliquary;
+
+    #[derive(TableRow, Debug)]
+    struct TestRow1 {
+        vec: Vec<RowId>,
+    }
+
+    fn vec_from_table_field_test() {
+        let table_configs = vec![TableConfig::new::<TestRow1>("foo")];
+        let mut db_connection = DbConnection::open_in_memory(table_configs).unwrap();
+        let row1 = db_connection.new_row_in_table("foo").unwrap();
+        let row2 = db_connection.new_row_in_table("foo").unwrap();
+        db_connection
+            .set_field_in_table("foo", row1, "vec", "1,2")
+            .unwrap();
+        db_connection
+            .set_field_in_table("foo", row2, "vec", "")
+            .unwrap();
+        let field1 =
+            Vec::<RowId>::from_table_field(&db_connection, "foo".into(), row1, "vec".into())
+                .unwrap();
+        assert_eq!(field1, vec![RowId(1), RowId(2)]);
+        let field2 =
+            Vec::<RowId>::from_table_field(&db_connection, "foo".into(), row2, "vec".into())
+                .unwrap();
+        assert!(field2.is_empty());
     }
 }

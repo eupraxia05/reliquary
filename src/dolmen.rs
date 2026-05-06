@@ -172,9 +172,9 @@ mod test {
     fn db_custom_path_test() -> Result<()> {
         let directories = directories::ProjectDirs::from("", "", "reliquary_test").unwrap();
         let db_path = directories.data_dir().join("data.db");
-        if std::fs::exists(db_path.clone()).unwrap() {
-            std::fs::remove_file(db_path.clone()).unwrap();
-        }
+
+        // we don't really care if this fails, it might not exist
+        let _ = std::fs::remove_file(db_path.clone());
 
         let mut context = Context::new();
         context.add_plugin(TestPlugin)?;
@@ -197,9 +197,9 @@ mod test {
     fn db_cache_dir_test() -> Result<()> {
         let directories = directories::ProjectDirs::from("", "", "reliquary_test").unwrap();
         let db_path = directories.data_dir().join("data.db");
-        if std::fs::exists(db_path.clone()).expect("couldn't check if db exists") {
-            std::fs::remove_file(db_path.clone()).expect("couldn't remove db");
-        }
+
+        // we don't really care if this fails, it might not exist
+        let _ = std::fs::remove_file(db_path.clone());
 
         let mut context = Context::new();
         context.add_plugin(TestPlugin)?;

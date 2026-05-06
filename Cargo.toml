@@ -8,8 +8,8 @@ chrono = "0.4.42"
 clap = "4.5.49"
 crossterm = "0.29.0"
 directories = "6.0.0"
-dolmen = { optional = true, version = "0.0.1", git = "https://github.com/eupraxia05/dolmen.git" }
-macros = { version = "0.1.0", path = "macros" }
+dolmen = { optional = true, version = "0.0.1", git = "https://github.com/eupraxia05/dolmen.git", rev="v0.0.1" }
+macros = { path = "macros" }
 ratatui = "0.29.0"
 rusqlite = "0.37.0"
 shlex = "1.3.0"
